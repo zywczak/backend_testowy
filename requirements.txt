@@ -1,5 +1,5 @@
-django
-django-cors-headers
-python-dotenv
-dj-database-url
+fastapi
+uvicorn
+sqlalchemy
 psycopg2-binary
+python-dotenv
