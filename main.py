@@ -12,7 +12,7 @@ app = FastAPI()
 # CORS — zezwól frontowi z Cloudflare na odpytywanie API
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://twoja-strona.pages.dev"],  # zmień na swój adres
+    allow_origins=["*"],  # zmień na swój adres
     allow_methods=["*"],
     allow_headers=["*"],
 )
