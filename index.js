@@ -28,8 +28,11 @@ async function initDB() {
       referer TEXT,
       user_agent TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
+    );
+
+    ALTER TABLE requests_log ADD COLUMN ip_chain TEXT;
   `);
+  
 }
 
 initDB();
@@ -50,7 +53,11 @@ app.post("/", async (req, res) => {
 
     // 🌐 headers
     const host = req.headers.host || null;
-    const origin = req.headers.origin || null;
+   const origin =
+  req.headers["x-client-origin"] ||
+  req.headers.origin ||
+  req.headers.referer ||
+  null;
     const referer = req.headers.referer || null;
     const userAgent = req.headers["user-agent"] || null;
 
