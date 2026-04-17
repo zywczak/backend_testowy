@@ -31,7 +31,7 @@ async function initDB() {
 initDB();
 
 // endpoint
-app.get("/", async (req, res) => {
+app.post("/", async (req, res) => {
   try {
     const ip =
       req.headers["x-forwarded-for"]?.split(",")[0] ||
