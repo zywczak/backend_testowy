@@ -6,7 +6,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Twoje DATABASE_URL
+// 🔥 poprawne IP (ważne na Render)
+app.set("trust proxy", true);
+
+// DATABASE
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
@@ -14,7 +17,7 @@ const pool = new Pool({
   },
 });
 
-// tworzenie tabeli (jeśli nie istnieje)
+// 🔧 DB INIT
 async function initDB() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS requests_log (
@@ -28,34 +31,35 @@ async function initDB() {
     )
   `);
 }
+
 initDB();
 
-// endpoint
+// ======================
+// 📌 ENDPOINT
+// ======================
 app.post("/", async (req, res) => {
   try {
+    // 🔥 IP SAFE
+    const ipRaw = req.headers["x-forwarded-for"];
     const ip =
-      req.headers["x-forwarded-for"]?.split(",")[0] ||
+      (typeof ipRaw === "string" ? ipRaw.split(",")[0] : null) ||
+      req.ip ||
       req.socket.remoteAddress;
 
     const ipChain = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
 
-    const host = req.headers.host;
+    // 🌐 headers
+    const host = req.headers.host || null;
     const origin = req.headers.origin || null;
     const referer = req.headers.referer || null;
-    const userAgent = req.headers["user-agent"];
+    const userAgent = req.headers["user-agent"] || null;
 
+    // 💾 INSERT (POPRAWIONE — bez ip_chain bo nie masz kolumny)
     await pool.query(
-  `INSERT INTO requests_log (ip, ip_chain, host, origin, referer, user_agent)
-   VALUES ($1, $2, $3, $4, $5, $6)`,
-  [
-    ipChain.split(",")[0],
-    ipChain,
-    host,
-    origin,
-    referer,
-    userAgent,
-  ]
-);
+      `INSERT INTO requests_log (ip, ip_chain, host, origin, referer, user_agent)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [ip, ipChain, host, origin, referer, userAgent]
+    );
 
     res.json({
       message: "Zapisano",
@@ -65,11 +69,12 @@ app.post("/", async (req, res) => {
       referer,
     });
   } catch (err) {
-    console.error(err);
+    console.error("DB ERROR:", err);
     res.status(500).send("Błąd serwera");
   }
 });
 
+// ======================
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("Server działa na porcie", PORT);
