@@ -37,16 +37,25 @@ app.post("/", async (req, res) => {
       req.headers["x-forwarded-for"]?.split(",")[0] ||
       req.socket.remoteAddress;
 
+    const ipChain = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+
     const host = req.headers.host;
     const origin = req.headers.origin || null;
     const referer = req.headers.referer || null;
     const userAgent = req.headers["user-agent"];
 
     await pool.query(
-      `INSERT INTO requests_log (ip, host, origin, referer, user_agent)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [ip, host, origin, referer, userAgent]
-    );
+  `INSERT INTO requests_log (ip, ip_chain, host, origin, referer, user_agent)
+   VALUES ($1, $2, $3, $4, $5, $6)`,
+  [
+    ipChain.split(",")[0],
+    ipChain,
+    host,
+    origin,
+    referer,
+    userAgent,
+  ]
+);
 
     res.json({
       message: "Zapisano",
